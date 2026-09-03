@@ -10,10 +10,11 @@ Desde la carpeta `servidor`:
 
 ```bash
 go run main.go
-
+```
 ## Ejecutar Cliente
 
 Desde la carpeta `cliente`:
 
 ```bash
 python3 cliente.py
+```
