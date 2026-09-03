@@ -1,9 +1,19 @@
-Sebastián Castillo 202273583-k
-Sebastián Césped 202273603-k
-Ricardo Ruz
+# Integrantes
 
-** Ejecutar Servidor
+- Sebastián Castillo — 202273583-K
+- Sebastián Césped — 202273603-K
+- Ricardo Ruz
+
+## Ejecutar Servidor
+
+Desde la carpeta `servidor`:
+
+```bash
 go run main.go
 
-** Ejecutar Cliente
+## Ejecutar Cliente
+
+Desde la carpeta `cliente`:
+
+```bash
 python3 cliente.py
