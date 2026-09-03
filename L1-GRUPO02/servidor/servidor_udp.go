@@ -1,0 +1,114 @@
+package main
+
+import (
+	"encoding/csv"
+	"fmt"
+	"net"
+	"os"
+	"strings"
+	"time"
+)
+
+const PUERTO_UDP = "9001"
+
+func actualizarHeartbeat(token string) bool {
+	//Proteger sesiones.csv
+	mutexSesiones.Lock()
+	defer mutexSesiones.Unlock()
+	archivo, err := os.Open("datos/sesiones.csv")
+
+	if err != nil {
+		return false
+	}
+
+	lector := csv.NewReader(archivo)
+	filas, err := lector.ReadAll()
+	archivo.Close()
+
+	if err != nil {
+		return false
+	}
+
+	encontrado := false
+
+	for i, fila := range filas {
+		if i == 0 {
+			continue
+		}
+
+		// Revisamos que la fila tenga las 3 columnas
+		if len(fila) < 3 {
+			continue
+		}
+
+		if fila[1] == token {
+			fila[2] = time.Now().Format(time.RFC3339)
+			encontrado = true
+		}
+	}
+
+	if !encontrado {
+		return false
+	}
+
+	archivo, err = os.Create("datos/sesiones.csv")
+
+	if err != nil {
+		return false
+	}
+
+	defer archivo.Close()
+	escritor := csv.NewWriter(archivo)
+	defer escritor.Flush()
+	escritor.WriteAll(filas)
+	return true
+}
+
+func iniciarServidorUDP() {
+	direccion, err := net.ResolveUDPAddr("udp", ":"+PUERTO_UDP)
+
+	if err != nil {
+		fmt.Println("Error resolviendo dirección UDP:", err)
+		return
+	}
+
+	conexion, err := net.ListenUDP("udp", direccion)
+
+	if err != nil {
+		fmt.Println("Error iniciando servidor UDP:", err)
+		return
+	}
+
+	defer conexion.Close()
+	fmt.Println("Servidor UDP iniciado en puerto", PUERTO_UDP)
+	buffer := make([]byte, 1024)
+
+	for {
+		n, cliente, err := conexion.ReadFromUDP(buffer)
+
+		if err != nil {
+			fmt.Println("Error leyendo UDP:", err)
+			continue
+		}
+
+		mensaje := strings.TrimSpace(string(buffer[:n]))
+		fmt.Println("UDP recibido desde", cliente, ":", mensaje)
+
+		if strings.HasPrefix(mensaje, "HEARTBEAT ") {
+			partes := strings.Split(mensaje, " ")
+
+			if len(partes) != 2 {
+				conexion.WriteToUDP([]byte("ERROR formato incorrecto\n"), cliente)
+				continue
+			}
+
+			token := partes[1]
+
+			if actualizarHeartbeat(token) {
+				conexion.WriteToUDP([]byte("OK\n"), cliente)
+			} else {
+				conexion.WriteToUDP([]byte("ERROR token invalido\n"), cliente)
+			}
+		}
+	}
+}

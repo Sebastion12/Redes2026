@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
 // Ruta
 const archivoUsuarios = "datos/usuarios.csv"
+
+var mutexSesiones sync.Mutex
 
 func crearArchivoUsuarios() {
 	os.MkdirAll("datos", 0755)
@@ -92,7 +95,6 @@ func guardarUsuario(username string, password string) {
 
 // Recibe el POST para registrar el usuario
 func registrarUsuario(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != "POST" {
 		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
 		return
@@ -123,10 +125,70 @@ func registrarUsuario(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Usuario registrado correctamente")
 }
 
-func main() {
+func mostrarHistorial(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method != "GET" {
+		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	archivo, err := os.Open("datos/historial.csv")
+
+	if err != nil {
+		http.Error(w, "No se pudo abrir historial.csv", http.StatusInternalServerError)
+		return
+	}
+
+	defer archivo.Close()
+	lector := csv.NewReader(archivo)
+	filas, err := lector.ReadAll()
+
+	if err != nil {
+		http.Error(w, "Error leyendo historial.csv", http.StatusInternalServerError)
+		return
+	}
+
+	for _, fila := range filas {
+		fmt.Fprintln(w, strings.Join(fila, ","))
+	}
+}
+
+func validarUsuario(username string, password string) bool {
+	archivo, err := os.Open(archivoUsuarios)
+
+	if err != nil {
+		return false
+	}
+
+	defer archivo.Close()
+	lector := csv.NewReader(archivo)
+	filas, err := lector.ReadAll()
+
+	if err != nil {
+		return false
+	}
+
+	for i, fila := range filas {
+		if i == 0 {
+			continue
+		}
+
+		if fila[0] == username && fila[1] == password {
+			return true
+		}
+	}
+
+	return false
+}
+
+func main() {
 	crearArchivoUsuarios()
 	http.HandleFunc("/register", registrarUsuario)
+	http.HandleFunc("/history", mostrarHistorial)
+	//Inicia el servidor TCP y UDP
+	go iniciarServidorTCP()
+	go iniciarServidorUDP()
+	go revisarSesiones()
 	fmt.Println("Servidor HTTP iniciado en puerto 8080")
 	//Inicia el servidor HTTP
 	err := http.ListenAndServe(":8080", nil)
