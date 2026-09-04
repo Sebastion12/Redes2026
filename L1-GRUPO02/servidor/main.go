@@ -15,6 +15,8 @@ const archivoUsuarios = "datos/usuarios.csv"
 
 var mutexSesiones sync.Mutex
 var mutexClientes sync.Mutex
+var mutexUsuarios sync.Mutex
+var mutexHistorial sync.Mutex
 
 func crearArchivoUsuarios() {
 	os.MkdirAll("datos", 0755)
@@ -115,6 +117,9 @@ func registrarUsuario(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Faltan username o password", http.StatusBadRequest)
 		return
 	}
+	//Proteger usuarios.csv
+	mutexUsuarios.Lock()
+	defer mutexUsuarios.Unlock()
 
 	if usuarioExiste(username) {
 		http.Error(w, "Usuario ya existe", http.StatusConflict)
@@ -127,6 +132,8 @@ func registrarUsuario(w http.ResponseWriter, r *http.Request) {
 }
 
 func mostrarHistorial(w http.ResponseWriter, r *http.Request) {
+	mutexHistorial.Lock()
+	defer mutexHistorial.Unlock()
 
 	if r.Method != "GET" {
 		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
@@ -155,6 +162,9 @@ func mostrarHistorial(w http.ResponseWriter, r *http.Request) {
 }
 
 func validarUsuario(username string, password string) bool {
+	//Proteger usuarios.csv
+	mutexUsuarios.Lock()
+	defer mutexUsuarios.Unlock()
 	archivo, err := os.Open(archivoUsuarios)
 
 	if err != nil {

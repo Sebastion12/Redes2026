@@ -65,7 +65,7 @@ func manejarCliente(conn net.Conn) {
 			password := partes[2]
 
 			if !validarUsuario(username, password) {
-				fmt.Fprintln(conn, "ERROR usuario o password incorrectos")
+				fmt.Fprintln(conn, "ERROR INVALID_CREDENTIALS")
 				return
 			}
 
@@ -75,7 +75,7 @@ func manejarCliente(conn net.Conn) {
 			clientesConectados[token] = conn
 			mutexClientes.Unlock()
 			tokenCliente = token
-			fmt.Fprintln(conn, "OK", token)
+			fmt.Fprintln(conn, "OK", token, PUERTO_UDP)
 			continue
 		}
 
@@ -89,17 +89,22 @@ func manejarCliente(conn net.Conn) {
 
 			token := partes[1]
 			texto := partes[2]
-			username := obtenerUsuarioPorToken(token)
+			username, errorSesion := validarSesion(token)
 
-			if username == "" {
-				fmt.Fprintln(conn, "ERROR token invalido")
-				return
+			if errorSesion == "INVALID_TOKEN" {
+				fmt.Fprintln(conn, "ERROR INVALID_TOKEN")
+				continue
+			}
+
+			if errorSesion == "SESSION_EXPIRED" {
+				fmt.Fprintln(conn, "ERROR SESSION_EXPIRED")
+				continue
 			}
 
 			fmt.Println("Mensaje de", username+":", texto)
 			guardarMensaje(username, texto)
 			enviarBroadcast(token, username, texto)
-			fmt.Fprintln(conn, "OK mensaje recibido")
+			fmt.Fprintln(conn, "ACK")
 			continue
 		}
 
@@ -132,8 +137,8 @@ func guardarSesion(username string, token string) {
 		token,
 		username,
 		fecha,
-		fecha,
-		"ACTIVO",
+		"",
+		"PENDIENTE",
 	})
 }
 
@@ -174,6 +179,9 @@ func obtenerUsuarioPorToken(token string) string {
 }
 
 func guardarMensaje(username string, texto string) {
+	//Proteger historial.csv
+	mutexHistorial.Lock()
+	defer mutexHistorial.Unlock()
 	archivo, err := os.OpenFile(
 		"datos/historial.csv",
 		os.O_APPEND|os.O_WRONLY,
@@ -200,13 +208,98 @@ func guardarMensaje(username string, texto string) {
 func enviarBroadcast(tokenEmisor string, username string, texto string) {
 	mutexClientes.Lock()
 	defer mutexClientes.Unlock()
-	mensaje := fmt.Sprintf("MSG %s: %s\n", username, texto)
+	mensaje := fmt.Sprintf("INCOMIG %s %s\n", username, texto)
 
 	for token, conexion := range clientesConectados {
 		if token != tokenEmisor {
 			fmt.Fprint(conexion, mensaje)
 		}
 	}
+}
+
+func validarSesion(token string) (string, string) {
+	mutexSesiones.Lock()
+	defer mutexSesiones.Unlock()
+	archivo, err := os.Open("datos/sesiones.csv")
+
+	if err != nil {
+		return "", "INVALID_TOKEN"
+	}
+
+	defer archivo.Close()
+	lector := csv.NewReader(archivo)
+	lector.FieldsPerRecord = -1
+	filas, err := lector.ReadAll()
+
+	if err != nil {
+		return "", "INVALID_TOKEN"
+	}
+
+	for i, fila := range filas {
+		if i == 0 {
+			continue
+		}
+
+		if len(fila) < 5 {
+			continue
+		}
+
+		if fila[0] != token {
+			continue
+		}
+
+		username := fila[1]
+		timestampCreacion := fila[2]
+		timestampHeartbeat := fila[3]
+		estado := fila[4]
+
+		if estado != "ACTIVO" {
+			return "", "SESSION_EXPIRED"
+		}
+
+		creacion, err := time.Parse(
+			time.RFC3339,
+			timestampCreacion,
+		)
+
+		if err != nil {
+			return "", "SESSION_EXPIRED"
+		}
+
+		heartbeat, err := time.Parse(
+			time.RFC3339,
+			timestampHeartbeat,
+		)
+
+		if err != nil {
+			return "", "SESSION_EXPIRED"
+		}
+
+		if time.Since(creacion) > 10*time.Minute {
+			return "", "SESSION_EXPIRED"
+		}
+
+		if time.Since(heartbeat) > 60*time.Second {
+			return "", "SESSION_EXPIRED"
+		}
+
+		return username, ""
+	}
+
+	return "", "INVALID_TOKEN"
+}
+
+func desconectarCliente(token string) {
+	mutexClientes.Lock()
+	defer mutexClientes.Unlock()
+	conexion, existe := clientesConectados[token]
+
+	if existe {
+		conexion.Close()
+		delete(clientesConectados, token)
+		fmt.Println("Conexión TCP cerrada para token:", token)
+	}
+
 }
 
 func iniciarServidorTCP() {

@@ -37,13 +37,27 @@ func revisarUnaVez() {
 			continue
 		}
 
+		token := fila[0]
 		username := fila[1]
 		timestampCreacion := fila[2]
 		timestampHeartbeat := fila[3]
+		estado := fila[4]
+
 		creacion, err := time.Parse(
 			time.RFC3339,
 			timestampCreacion,
 		)
+		//Todavía no ha llegado al primer heartbeat
+		if estado == "PENDIENTE" {
+			if time.Since(creacion) > 30*time.Second {
+				fmt.Println("Sesión anulada: no llego al primer heartbeat", username)
+				desconectarCliente(token)
+				continue
+			}
+
+			nuevasFilas = append(nuevasFilas, fila)
+			continue
+		}
 
 		if err != nil {
 			continue
@@ -63,11 +77,13 @@ func revisarUnaVez() {
 
 		if tiempoSesion > 10*time.Minute {
 			fmt.Println("Sesion expirada por TTL:", username)
+			desconectarCliente(token)
 			continue
 		}
 
 		if tiempoSinHeartbeat > 60*time.Second {
 			fmt.Println("Sesion eliminada:", username)
+			desconectarCliente(token)
 			continue
 		}
 

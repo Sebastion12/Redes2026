@@ -42,8 +42,9 @@ func actualizarHeartbeat(token string) bool {
 			continue
 		}
 
-		if fila[0] == token && fila[4] == "ACTIVO" {
+		if fila[0] == token && (fila[4] == "PENDIENTE" || fila[4] == "ACTIVO") {
 			fila[3] = time.Now().Format(time.RFC3339)
+			fila[4] = "ACTIVO"
 			encontrado = true
 		}
 	}

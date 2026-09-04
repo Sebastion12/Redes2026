@@ -4,7 +4,9 @@ import time
 
 HOST = "127.0.0.1"
 PUERTO = 8080
+token = None
 conexion_tcp = None
+heartbeat_activo = False
 
 def registrar_usuario():
     username = input("Ingrese username: ")
@@ -57,11 +59,13 @@ def iniciar_sesion():
     if respuesta.startswith("OK"):
         partes = respuesta.split(" ")
         token = partes[1]
+        puerto_udp = int(partes[2])
         print("Token guardado:", token)
+        print("Puerto UDP:", puerto_udp)        
         #Heartbeat en un hilo
         hilo = threading.Thread(
             target=heartbeat_automatico,
-            args=(token,),
+            args=(token, puerto_udp),
             daemon=True
         )
 
@@ -77,22 +81,27 @@ def iniciar_sesion():
 
     return None
 
-def enviar_heartbeat(token):
+def enviar_heartbeat(token, puerto_udp):
     cliente_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     mensaje = f"HEARTBEAT {token}"
 
     cliente_udp.sendto(
         mensaje.encode("utf-8"),
-        (HOST, 9001)
+        (HOST, puerto_udp)
     )
 
     respuesta, _ = cliente_udp.recvfrom(1024)
     cliente_udp.close()
 #Heartbeat cada 3s
-def heartbeat_automatico(token):
-    while True:
-        enviar_heartbeat(token)
+def heartbeat_automatico(token, puerto_udp):
+    global heartbeat_activo
+    heartbeat_activo = True
+     
+    while heartbeat_activo:
+        enviar_heartbeat(token, puerto_udp)
         time.sleep(3)
+
+    print("Heartbeat detenido")
 
 def enviar_mensaje(token):
     global conexion_tcp
@@ -155,13 +164,23 @@ def ver_historial():
     else:
         print("Error leyendo historial")
 
+def detener_heartbeat():
+    global heartbeat_activo
+
+    if heartbeat_activo:
+        heartbeat_activo = False
+        print("Heartbeat detenido")
+    else:
+        print("El heartbeat no está activo")
+
 while True:
     print("\n--- MENU ---")
     print("1. Registrar usuario")
     print("2. Iniciar sesión")
     print("3. Enviar mensaje")
     print("4. Ver Historial")
-    print("5. Salir")
+    print("5. Detener heartbeat")
+    print("6. Salir")
 
     opcion = input("Seleccione una opción: ")
 
@@ -178,7 +197,10 @@ while True:
         ver_historial()
 
     elif opcion == "5":
-        print("Programa terminado")
+        detener_heartbeat()
+
+    elif opcion == "6":
+        print("Saliendo...")
         break
 
     else:
