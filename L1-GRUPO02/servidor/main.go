@@ -14,6 +14,7 @@ import (
 const archivoUsuarios = "datos/usuarios.csv"
 
 var mutexSesiones sync.Mutex
+var mutexClientes sync.Mutex
 
 func crearArchivoUsuarios() {
 	os.MkdirAll("datos", 0755)

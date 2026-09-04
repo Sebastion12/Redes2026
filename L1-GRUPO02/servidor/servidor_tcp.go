@@ -24,12 +24,20 @@ func generarToken() string {
 
 func manejarCliente(conn net.Conn) {
 	lector := bufio.NewReader(conn)
+	tokenCliente := ""
 
 	for {
 		mensaje, err := lector.ReadString('\n')
 
 		if err != nil {
 			fmt.Println("Cliente desconectado")
+
+			if tokenCliente != "" {
+				mutexClientes.Lock()
+				delete(clientesConectados, tokenCliente)
+				mutexClientes.Unlock()
+			}
+
 			conn.Close()
 			return
 		}
@@ -63,7 +71,10 @@ func manejarCliente(conn net.Conn) {
 
 			token := generarToken()
 			guardarSesion(username, token)
+			mutexClientes.Lock()
 			clientesConectados[token] = conn
+			mutexClientes.Unlock()
+			tokenCliente = token
 			fmt.Fprintln(conn, "OK", token)
 			continue
 		}
@@ -118,9 +129,11 @@ func guardarSesion(username string, token string) {
 	fecha := time.Now().Format(time.RFC3339)
 
 	escritor.Write([]string{
-		username,
 		token,
+		username,
 		fecha,
+		fecha,
+		"ACTIVO",
 	})
 }
 
@@ -136,6 +149,7 @@ func obtenerUsuarioPorToken(token string) string {
 
 	defer archivo.Close()
 	lector := csv.NewReader(archivo)
+	lector.FieldsPerRecord = -1
 	filas, err := lector.ReadAll()
 
 	if err != nil {
@@ -147,12 +161,12 @@ func obtenerUsuarioPorToken(token string) string {
 			continue
 		}
 
-		if len(fila) < 3 {
+		if len(fila) < 5 {
 			continue
 		}
 
-		if fila[1] == token {
-			return fila[0]
+		if fila[0] == token {
+			return fila[1]
 		}
 	}
 
@@ -184,6 +198,8 @@ func guardarMensaje(username string, texto string) {
 }
 
 func enviarBroadcast(tokenEmisor string, username string, texto string) {
+	mutexClientes.Lock()
+	defer mutexClientes.Unlock()
 	mensaje := fmt.Sprintf("MSG %s: %s\n", username, texto)
 
 	for token, conexion := range clientesConectados {

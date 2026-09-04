@@ -33,19 +33,38 @@ func revisarUnaVez() {
 			continue
 		}
 
-		if len(fila) < 3 {
+		if len(fila) < 5 {
 			continue
 		}
 
-		username := fila[0]
-		ultimoHeartbeat := fila[2]
-		fecha, err := time.Parse(time.RFC3339, ultimoHeartbeat)
+		username := fila[1]
+		timestampCreacion := fila[2]
+		timestampHeartbeat := fila[3]
+		creacion, err := time.Parse(
+			time.RFC3339,
+			timestampCreacion,
+		)
 
 		if err != nil {
 			continue
 		}
 
-		tiempoSinHeartbeat := time.Since(fecha)
+		heartbeat, err := time.Parse(
+			time.RFC3339,
+			timestampHeartbeat,
+		)
+
+		if err != nil {
+			continue
+		}
+
+		tiempoSesion := time.Since(creacion)
+		tiempoSinHeartbeat := time.Since(heartbeat)
+
+		if tiempoSesion > 10*time.Minute {
+			fmt.Println("Sesion expirada por TTL:", username)
+			continue
+		}
 
 		if tiempoSinHeartbeat > 60*time.Second {
 			fmt.Println("Sesion eliminada:", username)
@@ -53,6 +72,7 @@ func revisarUnaVez() {
 		}
 
 		if tiempoSinHeartbeat > 30*time.Second {
+			fila[4] = "INACTIVO"
 			fmt.Println("Sesion inactiva:", username)
 		}
 

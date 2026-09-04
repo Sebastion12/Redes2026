@@ -22,6 +22,7 @@ func actualizarHeartbeat(token string) bool {
 	}
 
 	lector := csv.NewReader(archivo)
+	lector.FieldsPerRecord = -1
 	filas, err := lector.ReadAll()
 	archivo.Close()
 
@@ -37,12 +38,12 @@ func actualizarHeartbeat(token string) bool {
 		}
 
 		// Revisamos que la fila tenga las 3 columnas
-		if len(fila) < 3 {
+		if len(fila) < 5 {
 			continue
 		}
 
-		if fila[1] == token {
-			fila[2] = time.Now().Format(time.RFC3339)
+		if fila[0] == token && fila[4] == "ACTIVO" {
+			fila[3] = time.Now().Format(time.RFC3339)
 			encontrado = true
 		}
 	}
@@ -59,8 +60,8 @@ func actualizarHeartbeat(token string) bool {
 
 	defer archivo.Close()
 	escritor := csv.NewWriter(archivo)
-	defer escritor.Flush()
 	escritor.WriteAll(filas)
+	escritor.Flush()
 	return true
 }
 
