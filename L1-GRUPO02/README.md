@@ -4,12 +4,12 @@
 - Sebastián Césped — 202273603-K
 - Ricardo Ruz
 
-## Ejecutar Servidor
+## Ejecutar Servidores
 
 Desde la carpeta `servidor`:
 
 ```bash
-go run main.go
+go run *.go
 ```
 ## Ejecutar Cliente
 
