@@ -4,7 +4,6 @@
 - Sebastián Césped — 202273603-K
 - Ricardo Ruz - 202373567-1
 
-
 ## Descripción
 
 Este proyecto implementa un sistema cliente-servidor para registro, autenticación, presencia y mensajería en tiempo real, utilizando los protocolos HTTP, TCP y UDP.
