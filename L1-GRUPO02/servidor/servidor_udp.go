@@ -42,6 +42,7 @@ func actualizarHeartbeat(token string) bool {
 			continue
 		}
 
+		//Si el token coincide y el etado es pendiente o activo, se actualiza el heartbeat y cambia estaodo a activo
 		if fila[0] == token && (fila[4] == "PENDIENTE" || fila[4] == "ACTIVO") {
 			fila[3] = time.Now().Format(time.RFC3339)
 			fila[4] = "ACTIVO"
@@ -49,7 +50,7 @@ func actualizarHeartbeat(token string) bool {
 		}
 	}
 
-	if !encontrado {
+	if !encontrado { //si no encuentra token, retorna False
 		return false
 	}
 
@@ -74,6 +75,7 @@ func iniciarServidorUDP() {
 		return
 	}
 
+	// Inicia server UDP
 	conexion, err := net.ListenUDP("udp", direccion)
 
 	if err != nil {

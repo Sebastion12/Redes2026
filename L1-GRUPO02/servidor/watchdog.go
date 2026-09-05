@@ -25,10 +25,12 @@ func revisarUnaVez() {
 		return
 	}
 
+	//las filas nuevas que se escribiran en el archivo
 	nuevasFilas := [][]string{}
 
 	for i, fila := range filas {
 		if i == 0 {
+			//se copia la cabecera al archivo nuevo
 			nuevasFilas = append(nuevasFilas, fila)
 			continue
 		}
@@ -36,7 +38,7 @@ func revisarUnaVez() {
 		if len(fila) < 5 {
 			continue
 		}
-
+		//saca los datos de la fila
 		token := fila[0]
 		username := fila[1]
 		timestampCreacion := fila[2]
@@ -72,6 +74,7 @@ func revisarUnaVez() {
 			continue
 		}
 
+		//tiempos desde creación y ultimo heartbeat
 		tiempoSesion := time.Since(creacion)
 		tiempoSinHeartbeat := time.Since(heartbeat)
 

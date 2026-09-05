@@ -65,7 +65,7 @@ func manejarCliente(conn net.Conn) {
 			password := partes[2]
 
 			if !validarUsuario(username, password) {
-				fmt.Fprintln(conn, "ERROR INVALID_CREDENTIALS")
+				fmt.Fprintln(conn, "ERROR Credenciales inválidas")
 				return
 			}
 

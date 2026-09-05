@@ -12,6 +12,7 @@ def registrar_usuario():
     username = input("Ingrese username: ")
     password = input("Ingrese password: ")
     cuerpo = f"username={username}&password={password}"
+    
     #Petición HTTP
     solicitud = (
         "POST /register HTTP/1.1\r\n"
@@ -22,6 +23,7 @@ def registrar_usuario():
         "\r\n"
         f"{cuerpo}"
     )
+    
     #Crear socket tcp
     cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente.connect((HOST, PUERTO))
@@ -42,13 +44,15 @@ def registrar_usuario():
     print("\nRespuesta del servidor:")
     print(respuesta.decode("utf-8"))
 
+
+
 def iniciar_sesion():
     username = input("Ingrese username: ")
     password = input("Ingrese password: ")
 
     global conexion_tcp
     conexion_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conexion_tcp.connect((HOST, 9000))
+    conexion_tcp.connect((HOST, 9000)) #conecta al puerto 9000 para login
     mensaje = f"LOGIN {username} {password}\n"
     conexion_tcp.sendall(mensaje.encode("utf-8"))
     respuesta = conexion_tcp.recv(1024).decode("utf-8").strip()

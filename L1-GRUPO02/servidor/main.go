@@ -21,6 +21,7 @@ var mutexHistorial sync.Mutex
 func crearArchivoUsuarios() {
 	os.MkdirAll("datos", 0755)
 
+	//si usuarios.csv no exsite, lo crea y le escribe en el header
 	if _, err := os.Stat(archivoUsuarios); os.IsNotExist(err) {
 		archivo, err := os.Create(archivoUsuarios)
 
@@ -33,6 +34,7 @@ func crearArchivoUsuarios() {
 		escritor := csv.NewWriter(archivo)
 		defer escritor.Flush()
 
+		//header de csv
 		escritor.Write([]string{
 			"username",
 			"password",
@@ -41,11 +43,11 @@ func crearArchivoUsuarios() {
 	}
 }
 
-// Busca si el usuario esta en el csv
+// busca si un usuario esta en el csv
 func usuarioExiste(username string) bool {
 	archivo, err := os.Open(archivoUsuarios)
 
-	if err != nil {
+	if err != nil { //si archivo no existe
 		return false
 	}
 
@@ -59,11 +61,11 @@ func usuarioExiste(username string) bool {
 
 	for i, fila := range filas {
 
-		if i == 0 {
+		if i == 0 { //primera fila = header
 			continue
 		}
 
-		if fila[0] == username {
+		if fila[0] == username { //el resto de filas son usuarios
 			return true
 		}
 	}
@@ -89,7 +91,7 @@ func guardarUsuario(username string, password string) {
 	defer escritor.Flush()
 	fecha := time.Now().Format(time.RFC3339)
 
-	escritor.Write([]string{
+	escritor.Write([]string{ //escribe en csv
 		username,
 		password,
 		fecha,
@@ -127,7 +129,7 @@ func registrarUsuario(w http.ResponseWriter, r *http.Request) {
 	}
 
 	guardarUsuario(username, password)
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated) // 201 Created
 	fmt.Fprintln(w, "Usuario registrado correctamente")
 }
 
@@ -196,7 +198,7 @@ func main() {
 	crearArchivoUsuarios()
 	http.HandleFunc("/register", registrarUsuario)
 	http.HandleFunc("/history", mostrarHistorial)
-	//Inicia el servidor TCP y UDP
+	//Inicia el servidores TCP y UDP
 	go iniciarServidorTCP()
 	go iniciarServidorUDP()
 	go revisarSesiones()
