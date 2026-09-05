@@ -2,7 +2,7 @@
 
 - Sebastián Castillo — 202273583-K
 - Sebastián Césped — 202273603-K
-- Ricardo Ruz
+- Ricardo Ruz - 202373567-1
 
 ## Ejecutar Servidores
 
