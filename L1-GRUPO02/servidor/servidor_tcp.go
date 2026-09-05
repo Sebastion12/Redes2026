@@ -208,7 +208,7 @@ func guardarMensaje(username string, texto string) {
 func enviarBroadcast(tokenEmisor string, username string, texto string) {
 	mutexClientes.Lock()
 	defer mutexClientes.Unlock()
-	mensaje := fmt.Sprintf("INCOMIG %s %s\n", username, texto)
+	mensaje := fmt.Sprintf("INCOMING %s %s\n", username, texto)
 
 	for token, conexion := range clientesConectados {
 		if token != tokenEmisor {
