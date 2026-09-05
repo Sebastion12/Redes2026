@@ -33,7 +33,7 @@ Para ejecutar el proyecto se requiere Go 1.20 o superior y Python 3.10 o superio
 
 ## Ejecutar Servidores
 
-Desde la carpeta `servidor` ejecutar: go run *.g
+Desde la carpeta `servidor` ejecutar: ```bash go run *.go ```
 
 Al iniciar correctamente deberían aparecer mensajes similares a:
 - Servidor HTTP iniciado en puerto 8080
@@ -43,7 +43,7 @@ El servidor ejecuta simultáneamente los servicios HTTP, TCP y UDP.
 
 ## Ejecutar Cliente
 
-Desde la carpeta `cliente` ejecutar: python3 cliente.py
+Desde la carpeta `cliente` ejecutar: ```bash python3 cliente.py ```
 
 El cliente permite:
 
