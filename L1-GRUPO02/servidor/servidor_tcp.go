@@ -32,6 +32,7 @@ func manejarCliente(conn net.Conn) {
 		if err != nil {
 			fmt.Println("Cliente desconectado")
 
+			//si cliente se desconecta se le borra de la lista de clientes conectados
 			if tokenCliente != "" {
 				mutexClientes.Lock()
 				delete(clientesConectados, tokenCliente)
@@ -42,6 +43,7 @@ func manejarCliente(conn net.Conn) {
 			return
 		}
 
+		//limpia mensaje, subdivide
 		mensaje = strings.TrimSpace(mensaje)
 		fmt.Println("Recibido:", mensaje)
 		partes := strings.SplitN(mensaje, " ", 3)
@@ -79,7 +81,7 @@ func manejarCliente(conn net.Conn) {
 			continue
 		}
 
-		// MSG
+		// MENSAJE
 		if comando == "MSG" {
 
 			if len(partes) != 3 {
@@ -91,11 +93,12 @@ func manejarCliente(conn net.Conn) {
 			texto := partes[2]
 			username, errorSesion := validarSesion(token)
 
+			//token invalido
 			if errorSesion == "INVALID_TOKEN" {
 				fmt.Fprintln(conn, "ERROR INVALID_TOKEN")
 				continue
 			}
-
+			//sesion expirada
 			if errorSesion == "SESSION_EXPIRED" {
 				fmt.Fprintln(conn, "ERROR SESSION_EXPIRED")
 				continue
@@ -113,7 +116,7 @@ func manejarCliente(conn net.Conn) {
 }
 
 func guardarSesion(username string, token string) {
-	//Proteger sesiones.csv
+	//Protege sesiones.csv
 	mutexSesiones.Lock()
 	defer mutexSesiones.Unlock()
 
@@ -133,6 +136,7 @@ func guardarSesion(username string, token string) {
 	defer escritor.Flush()
 	fecha := time.Now().Format(time.RFC3339)
 
+	//escribe el nuevo inicio de sesion en el csv
 	escritor.Write([]string{
 		token,
 		username,
@@ -143,7 +147,7 @@ func guardarSesion(username string, token string) {
 }
 
 func obtenerUsuarioPorToken(token string) string {
-	//Proteger sesiones.csv
+	//Protege sesiones.csv
 	mutexSesiones.Lock()
 	defer mutexSesiones.Unlock()
 	archivo, err := os.Open("datos/sesiones.csv")
@@ -161,6 +165,7 @@ func obtenerUsuarioPorToken(token string) string {
 		return ""
 	}
 
+	//busca token del csv, si lo encuentra devuelve el username
 	for i, fila := range filas {
 		if i == 0 {
 			continue
@@ -206,10 +211,12 @@ func guardarMensaje(username string, texto string) {
 }
 
 func enviarBroadcast(tokenEmisor string, username string, texto string) {
+	//Protege clientesConectados
 	mutexClientes.Lock()
 	defer mutexClientes.Unlock()
 	mensaje := fmt.Sprintf("INCOMING %s %s\n", username, texto)
 
+	//manda mensajes a todo otro cliente conectado menos el emisor
 	for token, conexion := range clientesConectados {
 		if token != tokenEmisor {
 			fmt.Fprint(conexion, mensaje)
@@ -234,6 +241,7 @@ func validarSesion(token string) (string, string) {
 	if err != nil {
 		return "", "INVALID_TOKEN"
 	}
+	//gestion de sesiones expiradas con token
 
 	for i, fila := range filas {
 		if i == 0 {
@@ -294,6 +302,7 @@ func desconectarCliente(token string) {
 	defer mutexClientes.Unlock()
 	conexion, existe := clientesConectados[token]
 
+	//si existe la conexion, la cierra y la elimina del mapa de clientes conectados
 	if existe {
 		conexion.Close()
 		delete(clientesConectados, token)
