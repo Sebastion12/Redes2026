@@ -14,22 +14,22 @@ Conexiones router-hosts de todas menos AS30 que pide DHCP listas, con direccione
 
 Completado OSPF de AS10, revisar que funcionen, fue de la forma:
 
+```
 enable
-
 configure terminal
-
 router ospf 1
-### (escribir un network para la red actual, y una red por cada conexión a otro router con la dirección de los cables,, con la submask que es el inverso de las masks, tomando de ejemplo a Deadlock:)
-
+### (escribir un network para la red actual, y una red por cada conexión a otro router con la dirección de los cables,
+     con la submask que es el inverso de las masks, tomando de ejemplo a Deadlock:)
 network 172.16.24.0 0.0.7.255 area 0
-
 network 1.0.0.0 0.255.255.255 area 0
-
 network 2.0.0.0 0.255.255.255 area 0
-
 end
-
+```
 
 
 Revisar conexión de Base server con Cypher, porque la linea apunta al router en vez de la interfaz
+
+## SI VAN A HACER CAMBIOS A LOS ROUTER:
+ejecutar ```Router(config)# do write memory``` o preguntar por un equivalente en otra altura de ese router, esto hace que cambios
+se guarden en VRAM y se guarden de forma consistente a futuro
 
