@@ -12,7 +12,7 @@ Conexiones router-hosts de todas menos AS30 que pide DHCP listas, con direccione
 
 
 
-Completado OSPF de AS10, revisar que funcionen, fue de la forma:
+### Completado OSPF de AS10, revisar que funcionen, fue de la forma:
 
 ```
 enable
@@ -26,10 +26,20 @@ network 2.0.0.0 0.255.255.255 area 0
 end
 ```
 
+### DHCP de Gekko y Viper listos, se llaman GEKKO_LAN y VIPER_LAN
 
+
+```
+# (en exclude-adders, empieza desde la ip de la interfaz, y se excluyen ese y las 9 siguientes direcciones)
+Router(config)# ip dhcp excluded-address <ip_inicio> <ip_final>         #ip inicio +9
+Router(config)# ip dhcp pool POOL_LAN                                   #nombre de pool
+Router(dhcp-config)# network <network_ID> <netmask>                     #direccion de red (la base) y su red
+Router(dhcp-config)# default-router <ip_router>                         #direccion de la interfaz
+
+```
 Revisar conexión de Base server con Cypher, porque la linea apunta al router en vez de la interfaz
 
 ## SI VAN A HACER CAMBIOS A LOS ROUTER:
-ejecutar ```Router(config)# do write memory``` o preguntar por un equivalente en otra altura de ese router, esto hace que cambios
+ejecutar ```Router(config)# do write memory``` o la opcón de save NVRAM en opciones de los routers
 se guarden en VRAM y se guarden de forma consistente a futuro
 
