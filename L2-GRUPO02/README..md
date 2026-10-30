@@ -43,3 +43,11 @@ Revisar conexión de Base server con Cypher, porque la linea apunta al router en
 ejecutar ```Router(config)# do write memory``` o la opcón de save NVRAM en opciones de los routers
 se guarden en VRAM y se guarden de forma consistente a futuro
 
+
+--30/10/26---
+Rutas básicas creadas para todo router y sus hosts
+falta revisar cómo conectar el server base al router, porque parece que no puede compartir subred con interfaz
+conexiones de AS 10 a AS 40 funcionando, de AS50 sólo conecta con AS40, hay que revisar porque no puede salir más allá de ahí
+en AS40, cómo estaba Sage, hice un OSPF a la rápida y parece que funciona bien, hay que revisar que se tenga que hacer así y no de otra forma
+
+Ir probando enviar mensajes entre todos los routers primero para ir asegurando las conexiones, y después entre pares de hosts de distintos routers
