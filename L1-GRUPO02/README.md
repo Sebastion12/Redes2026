@@ -1,7 +1,7 @@
 # Integrantes
 
 - Sebastián Castillo — 202273583-K
-- Sebastián Césped — 202273603-K
+- Sebastián Césped — 202273603-8
 - Ricardo Ruz - 202373567-1
 
 ## Descripción
